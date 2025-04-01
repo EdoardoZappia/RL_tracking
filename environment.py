@@ -32,10 +32,51 @@ class TrackingEnv(gym.Env):
         # Render
         self.render_mode = render_mode
         self.renderer = None
+        self.step_counter = 0
+        self.max_steps = 1000
+
+    def rimbalzo(self):
+        # Ottieni la posizione attuale
+        pos = self.data.qpos[:2]
+        vel = self.data.qvel[:2]
+
+        # Limiti dell'area
+        x_min, x_max = -2.0, 2.0
+        y_min, y_max = -2.0, 2.0
+
+        rimbalzato = False
+
+        # Rimbalzo su X
+        if pos[0] < x_min:
+            pos[0] = x_min
+            vel[0] *= -1
+            rimbalzato = True
+        elif pos[0] > x_max:
+            pos[0] = x_max
+            vel[0] *= -1
+            rimbalzato = True
+
+        # Rimbalzo su Y
+        if pos[1] < y_min:
+            pos[1] = y_min
+            vel[1] *= -1
+            rimbalzato = True
+        elif pos[1] > y_max:
+            pos[1] = y_max
+            vel[1] *= -1
+            rimbalzato = True
+
+        # Applica le modifiche
+        self.data.qpos[:2] = pos
+        self.data.qvel[:2] = vel
+
+        return rimbalzato
+
 
     def step(self, action):
         """Esegue un passo nel simulatore MuJoCo"""
         # Converti il tensor di PyTorch in NumPy
+        self.step_counter += 1
         if isinstance(action, torch.Tensor):
             action = action.detach().cpu().numpy()
         self.data.ctrl[:2] = action     # muovo solo l'agente
@@ -47,6 +88,7 @@ class TrackingEnv(gym.Env):
 
         x_agent, y_agent, x_target, y_target = qpos[:4]
 
+        #obs = np.array([x_agent, y_agent, x_target, y_target, self.step_counter], dtype=np.float32)
         obs = np.array([x_agent, y_agent, x_target, y_target], dtype=np.float32)
 
         # **Reward NON viene calcolato qui** (sarà compito del modello di RL)
@@ -54,19 +96,28 @@ class TrackingEnv(gym.Env):
 
         # L'ambiente **non termina mai** da solo, spetta al modello RL decidere
         done = False
+        truncated = False
 
-        return obs, reward, done, False, {}
+        if self.step_counter >= self.max_steps:
+            truncated = True
+
+        rimbalzato = self.rimbalzo()
+
+        return obs, reward, done, truncated, {}, rimbalzato
 
     def reset(self, seed=None, options=None):
         """Resetta l'ambiente"""
         super().reset(seed=seed)
 
+        self.step_counter = 0
+
         # Resetta la simulazione
         mujoco.mj_resetData(self.model, self.data)
 
-        # Stato iniziale [0,0] per l'agente [0.7, 0.7] per il target
-        self.data.qpos = [0, 0, 0.3, 0.3]
-        obs = self.data.qpos[:4]
+        # Stato iniziale [0,0] per l'agente [0.3, 0.3] per il target
+        self.data.qpos = [0, 0, -0.3, 0.3]
+        obs = self.data.qpos
+        #obs = np.concatenate((obs, [self.step_counter]), axis=0)
 
         return obs, {}
 
