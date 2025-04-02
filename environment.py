@@ -114,8 +114,8 @@ class TrackingEnv(gym.Env):
         # Resetta la simulazione
         mujoco.mj_resetData(self.model, self.data)
 
-        # Stato iniziale [0,0] per l'agente [0.3, 0.3] per il target
-        self.data.qpos = [0, 0, -0.3, 0.3]
+        # Stato iniziale [0,0] per l'agente [1.0, 0.5] per il target
+        self.data.qpos = [0, 0, 0.4, -0.3]
         obs = self.data.qpos
         #obs = np.concatenate((obs, [self.step_counter]), axis=0)
 
