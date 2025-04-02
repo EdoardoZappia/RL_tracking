@@ -33,7 +33,7 @@ class TrackingEnv(gym.Env):
         self.render_mode = render_mode
         self.renderer = None
         self.step_counter = 0
-        self.max_steps = 1000
+        self.max_steps = 400
 
     def rimbalzo(self):
         # Ottieni la posizione attuale
