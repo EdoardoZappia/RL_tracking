@@ -105,7 +105,7 @@ class TrackingEnv(gym.Env):
 
         return obs, reward, done, truncated, {}, rimbalzato
 
-    def reset(self, seed=None, options=None):
+    def reset(self, seed=None, options=None, target=None):
         """Resetta l'ambiente"""
         super().reset(seed=seed)
 
@@ -115,7 +115,11 @@ class TrackingEnv(gym.Env):
         mujoco.mj_resetData(self.model, self.data)
 
         # Stato iniziale [0,0] per l'agente [1.0, 0.5] per il target
-        self.data.qpos = [0, 0, 0.4, -0.3]
+        if target is None:
+            target = [0.3, -0.5]
+        #self.data.qpos = [0, 0, -0.3, -0.5]
+        self.data.qpos[:2] = [0, 0]  # Posizione dell'agente
+        self.data.qpos[2:4] = target  # Posizione del target
         obs = self.data.qpos
         #obs = np.concatenate((obs, [self.step_counter]), axis=0)
 
