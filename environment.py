@@ -21,8 +21,10 @@ class TrackingEnv(gym.Env):
         self.data = mujoco.MjData(self.model)
 
         # Definizione dello spazio delle azioni Fx e Fy
-        self.action_space = spaces.Box(low=np.array([-10, -10]), 
-                                       high=np.array([10, 10]), dtype=np.float32)
+        #self.action_space = spaces.Box(low=np.array([-10, -10]), high=np.array([10, 10]), dtype=np.float32)
+
+        # Definizione dello spazio delle velocità dx e dy
+        self.action_space = spaces.Box(low=np.array([-0.1, -0.1]), high=np.array([0.1, 0.1]), dtype=np.float32)
 
         # Definizione dello spazio delle osservazioni [x, y, x_target, y_target]
         obs_low = np.array([-5, -5, -5, -5], dtype=np.float32)
@@ -41,8 +43,8 @@ class TrackingEnv(gym.Env):
         vel = self.data.qvel[:2]
 
         # Limiti dell'area
-        x_min, x_max = -2.0, 2.0
-        y_min, y_max = -2.0, 2.0
+        x_min, x_max = -2.0, 2.0    # -2.0 < x < 2.0
+        y_min, y_max = -2.0, 2.0    # -2.0 < y < 2.0
 
         rimbalzato = False
 
@@ -79,31 +81,32 @@ class TrackingEnv(gym.Env):
         self.step_counter += 1
         if isinstance(action, torch.Tensor):
             action = action.detach().cpu().numpy()
-        self.data.ctrl[:2] = action     # muovo solo l'agente
+        #self.data.ctrl[:2] = action     # muovo solo l'agente
+        self.data.qvel[:2] = action  # muovo solo l'agente
         mujoco.mj_step(self.model, self.data)
 
         target_pos = self.data.qpos[2:4]
 
-        # # Movimento casuale vincolato in un cerchio di raggio 0.08
+        # Movimento casuale vincolato in un cerchio di raggio 0.08
         # movement = np.random.uniform(low=-0.005, high=0.005, size=2)  # piccolo spostamento casuale
         # proposed_pos = target_pos + movement
         # proposed_pos = torch.tensor(proposed_pos, dtype=torch.float32)
 
         # # Calcola distanza dalla posizione iniziale
         # displacement = proposed_pos - self.target_center
-        # if np.linalg.norm(displacement) <= 0.08:
+        # if np.linalg.norm(displacement) <= 0.1:
         #     self.data.qpos[2:4] = proposed_pos  # accetta lo spostamento
-        # # else: nessun movimento (rimane fermo)
+        # else: nessun movimento (rimane fermo)
 
         # Movimento rettilineo
-        self.data.qpos[2:4] += self.target_velocity
-        proposed_pos = self.data.qpos[2:4]
-        proposed_pos = torch.tensor(proposed_pos, dtype=torch.float32)
+        # self.data.qpos[2:4] += self.target_velocity
+        # proposed_pos = self.data.qpos[2:4]
+        # proposed_pos = torch.tensor(proposed_pos, dtype=torch.float32)
 
-        # (facoltativo) Mantieni il target entro un'area
-        displacement = proposed_pos - self.target_center
-        if np.linalg.norm(displacement) > 0.1: # raggio di 0.1
-            self.target_velocity *= -1  # inverte direzione quando esce dal raggio
+        # # (facoltativo) Mantieni il target entro un'area
+        # displacement = proposed_pos - self.target_center
+        # if np.linalg.norm(displacement) > 0.1: # raggio di 0.1
+        #     self.target_velocity *= -1  # inverte direzione quando esce dal raggio
 
 
 
@@ -147,7 +150,7 @@ class TrackingEnv(gym.Env):
         self.data.qpos[2:4] = target  # Posizione del target
 
         self.target_center = target
-        self.target_velocity = np.array([0.01, 0.0])  # Velocità del target
+        #self.target_velocity = np.array([0.01, 0.0])  # Velocità del target per movimento rettilineo
 
         obs = self.data.qpos
         #obs = np.concatenate((obs, [self.step_counter]), axis=0)
