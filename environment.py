@@ -87,7 +87,7 @@ class TrackingEnv(gym.Env):
 
         target_pos = self.data.qpos[2:4]
 
-        # Movimento casuale vincolato in un cerchio di raggio 0.08
+        # # Movimento casuale vincolato in un cerchio di raggio 0.08
         # movement = np.random.uniform(low=-0.005, high=0.005, size=2)  # piccolo spostamento casuale
         # proposed_pos = target_pos + movement
         # proposed_pos = torch.tensor(proposed_pos, dtype=torch.float32)
@@ -96,10 +96,11 @@ class TrackingEnv(gym.Env):
         # displacement = proposed_pos - self.target_center
         # if np.linalg.norm(displacement) <= 0.1:
         #     self.data.qpos[2:4] = proposed_pos  # accetta lo spostamento
-        # else: nessun movimento (rimane fermo)
+        # # else: nessun movimento (rimane fermo)
 
-        # Movimento rettilineo
+        # # Movimento rettilineo
         # self.data.qpos[2:4] += self.target_velocity
+
         # proposed_pos = self.data.qpos[2:4]
         # proposed_pos = torch.tensor(proposed_pos, dtype=torch.float32)
 
@@ -133,7 +134,7 @@ class TrackingEnv(gym.Env):
 
         return obs, reward, done, truncated, {}, rimbalzato
 
-    def reset(self, seed=None, options=None, target=None):
+    def reset(self, seed=None, options=None):
         """Resetta l'ambiente"""
         super().reset(seed=seed)
 
@@ -142,15 +143,25 @@ class TrackingEnv(gym.Env):
         # Resetta la simulazione
         mujoco.mj_resetData(self.model, self.data)
 
-        # Stato iniziale [0,0] per l'agente [1.0, 0.5] per il target
-        if target is None:
-            target = [0.3, -0.5]
-        #self.data.qpos = [0, 0, -0.3, -0.5]
-        self.data.qpos[:2] = [0, 0]  # Posizione dell'agente
-        self.data.qpos[2:4] = target  # Posizione del target
+        self.data.qpos[:] = np.random.uniform(low=-1, high=1, size=(4,))  # Posizione casuale dell'agente e del target
+        self.target_center = self.data.qpos[2:4]  # Posizione iniziale del target
+        # # Stato iniziale [0,0] per l'agente [1.0, 0.5] per il target
+        # if target is None:
+        #     target = [0.3, -0.5]
 
-        self.target_center = target
+        # self.data.qpos[:2] = [0, 0]  # Posizione dell'agente
+        # self.data.qpos[2:4] = target  # Posizione del target
+
+        # self.target_center = target
         #self.target_velocity = np.array([0.01, 0.0])  # Velocità del target per movimento rettilineo
+
+        # theta = np.random.uniform(0, 2 * np.pi)
+        # speed = 0.005  # puoi regolarla
+        # self.target_velocity = np.array([
+        #         speed * np.cos(theta),
+        #         speed * np.sin(theta)
+        #         ], dtype=np.float32)
+
 
         obs = self.data.qpos
         #obs = np.concatenate((obs, [self.step_counter]), axis=0)
