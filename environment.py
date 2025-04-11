@@ -164,7 +164,6 @@ class TrackingEnv(gym.Env):
 
 
         obs = self.data.qpos
-        #obs = np.concatenate((obs, [self.step_counter]), axis=0)
 
         return obs, {}
 
