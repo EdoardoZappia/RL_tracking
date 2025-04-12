@@ -178,7 +178,7 @@ def save_trajectory_plot(trajectory, target_trajectory, episode, tag="trajectory
     plt.savefig(os.path.join(RUN_DIR, f"{tag}_ep{episode}.png"))
     plt.close()
 
-def train_ddpg(env=None, num_episodes=4001):
+def train_ddpg(env=None, num_episodes=6001):
     if env is None:
         env = TrackingEnv()
     state_dim = env.observation_space.shape[0]
