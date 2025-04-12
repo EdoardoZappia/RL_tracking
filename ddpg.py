@@ -17,7 +17,7 @@ np.random.seed(SEED)
 
 NUM_NEURONS = 256
 LR_ACTOR = 0.001
-LR_CRITIC = 0.0001
+LR_CRITIC = 0.001
 GAMMA = 0.99
 TAU = 0.005
 EARLY_STOPPING_EPISODES = 30
@@ -39,7 +39,7 @@ class PolicyNet(nn.Module):
     def forward(self, state):
         x = F.relu(self.fc1(state))
         x = F.relu(self.fc2(x))
-        action = torch.tanh(self.fc3(x))
+        action = torch.tanh(self.fc3(x)) * 5.0
         return action
 
 class QNet(nn.Module):
@@ -78,23 +78,35 @@ class DDPGAgent(nn.Module):
         self.optimizer_actor = optim.Adam(self.actor.parameters(), lr=LR_ACTOR)
         self.optimizer_critic = optim.Adam(self.critic.parameters(), lr=LR_CRITIC)
         self.buffer = ReplayBuffer(50000)
-        self.batch_size = 64
-        self.noise_std = 0.3
+        self.batch_size = 128
+        self.noise_std = 0.5
         self.min_noise_std = 0.01
-        self.noise_decay = 0.995
+        self.noise_decay = 0.999
 
     def reward_function(self, state, action, next_state, step, tolerance, rimbalzato, attached_counter):
+        #reward = - torch.norm(next_state[:2] - state[2:4]) -1
         pos = state[:2]
-        target = state[2:4]
+        target = state[2:4]              # target(t)
+        next_pos = next_state[:2]        # agent(t+1)
+
         to_target = F.normalize(target - pos, dim=0)
         action_dir = F.normalize(action, dim=0)
         direction_reward = torch.dot(action_dir, to_target)
-        reward = direction_reward
-        if torch.norm(next_state[:2] - target) < tolerance:
-            reward += 50
+        direction_penalty = 1.0 - direction_reward
+
+        dist_before = torch.norm(pos - target)
+        dist_after = torch.norm(next_pos - target)  # sempre verso target(t)
+        progress = dist_before - dist_after
+
+        reward = - 5 * direction_penalty #+ progress
+
+        if torch.norm(next_state[:2] - state[2:4]) < tolerance:
+            reward += 100
+        
         if rimbalzato:
             reward -= 5
-        return reward.item() - 1
+
+        return reward - 1
 
     def update(self, gamma=GAMMA, tau=TAU, device='cpu'):
         if len(self.buffer) < self.batch_size:
@@ -190,6 +202,7 @@ def train_ddpg(env=None, num_episodes=4001):
             action = agent.actor(state).detach().numpy()
             noise = np.random.normal(0, agent.noise_std, size=action.shape)
             noisy_action = action + noise
+            noisy_action = np.clip(noisy_action, env.action_space.low, env.action_space.high)
             action_tensor = torch.tensor(noisy_action, dtype=torch.float32)
 
             next_state, _, done, truncated, _, rimbalzato = env.step(noisy_action)
@@ -200,7 +213,8 @@ def train_ddpg(env=None, num_episodes=4001):
             reward = agent.reward_function(state, action_tensor, next_state, 0, tolerance, rimbalzato, 0)
             transition = (state.numpy(), action_tensor.numpy(), reward, next_state.numpy(), float(done))
             agent.buffer.push(transition)
-            agent.update()
+            if len(agent.buffer) > 1000:
+                agent.update()
             state = next_state
             total_reward += reward
 
