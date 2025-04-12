@@ -220,7 +220,7 @@ def save_trajectory_plot(trajectory, target_trajectory, episode, tag="trajectory
     plt.savefig(os.path.join(RUN_DIR, f"{tag}_ep{episode}.png"))
     plt.close()
 
-def train_ppo(env=None, num_episodes=6001):
+def train_ppo(env=None, num_episodes=10001):
     if env is None:
         env = TrackingEnv()
     num_inputs = env.observation_space.shape[0]
