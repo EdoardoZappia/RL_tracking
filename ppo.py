@@ -26,7 +26,7 @@ ENTROPY_COEFF = 0.01
 CHECKPOINT_INTERVAL = 500
 
 now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-RUN_DIR = f"runs/ppo_run_{now}"
+RUN_DIR = f"runs/ppo_run_static_noise{now}"
 os.makedirs(RUN_DIR, exist_ok=True)
 
 def compute_advantages(rewards, values, dones, gamma=GAMMA, lam=LAMBDA):
@@ -51,7 +51,7 @@ class PolicyNet(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(PolicyNet, self).__init__()
 
-        self.noise_std = 0.02
+        self.noise_std = 0.01
         
         self.fc1 = nn.Linear(state_dim, NUM_NEURONS)
         self.fc2 = nn.Linear(NUM_NEURONS, NUM_NEURONS)
@@ -71,9 +71,10 @@ class PolicyNet(nn.Module):
         return state
 
 
-    def forward(self, state):#, exploration_term):
-
-        #state = self.add_noise_to_target(state)
+    def forward(self, state, training=True):
+        
+        if training:
+            state = self.add_noise_to_target(state)
 
         x = F.relu(self.fc1(state))
         x = F.relu(self.fc2(x))
@@ -96,7 +97,9 @@ class ValueNet(nn.Module):
         self.fc2 = nn.Linear(NUM_NEURONS, NUM_NEURONS)
         self.fc3 = nn.Linear(NUM_NEURONS, 1)
         
-    def forward(self, x):
+    def forward(self, x, training=True):
+        if training:
+            x = self.add_noise_to_target(x)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         return self.fc3(x)
@@ -110,8 +113,8 @@ class PPOAgent(nn.Module):
         self.optimizer_critic = optim.Adam(self.critic.parameters(), lr=LR_CRITIC)
         self.buffer = []
     
-    def get_action(self, state):
-        mu, sigma = self.actor.forward(state)#, exploration_term)
+    def get_action(self, state, training=True):
+        mu, sigma = self.actor.forward(state, training)
         dist = torch.distributions.Normal(mu, sigma)
         action = dist.rsample()  # Usa reparametrization trick per il backprop
         log_prob = dist.log_prob(action).sum(dim=-1)  # Somma log-prob per dimensione azione
@@ -154,13 +157,13 @@ class PPOAgent(nn.Module):
         actions = torch.stack(actions).float()
         rewards = torch.tensor(rewards, dtype=torch.float32)
         dones = torch.tensor(dones, dtype=torch.float32)
-        values = self.critic(states).squeeze()
+        values = self.critic(states, training=True).squeeze()
         advantages = compute_advantages(rewards, values.detach(), dones)
         returns = compute_returns(rewards, dones)  # Compute Monte Carlo returns
         returns = torch.tensor(returns, dtype=torch.float32)
         
         for _ in range(K_EPOCH):
-            means, stds = self.actor(states)
+            means, stds = self.actor(states, training=True)
             dist = torch.distributions.Normal(means, stds)
             entropy = dist.entropy().sum(dim=-1).mean()  # media sull’intero batch
             new_log_probs = dist.log_prob(actions).sum(dim=-1)
@@ -168,7 +171,7 @@ class PPOAgent(nn.Module):
             surr1 = ratio * advantages
             surr2 = torch.clamp(ratio, 1-CLIP_EPS, 1+CLIP_EPS) * advantages
             policy_loss = -torch.min(surr1, surr2).mean() - ENTROPY_COEFF * entropy
-            values_pred =self.critic(states).squeeze()
+            values_pred =self.critic(states, training=True).squeeze()
             value_loss = F.mse_loss(values_pred, returns)
 
             total_loss = policy_loss + value_loss
