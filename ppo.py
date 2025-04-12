@@ -96,6 +96,7 @@ class ValueNet(nn.Module):
         self.fc1 = nn.Linear(num_inputs, NUM_NEURONS)
         self.fc2 = nn.Linear(NUM_NEURONS, NUM_NEURONS)
         self.fc3 = nn.Linear(NUM_NEURONS, 1)
+        self.noise_std = 0.01
 
     def add_noise_to_target(self, state):
         state = state.clone()
