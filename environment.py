@@ -24,7 +24,7 @@ class TrackingEnv(gym.Env):
         #self.action_space = spaces.Box(low=np.array([-10, -10]), high=np.array([10, 10]), dtype=np.float32)
 
         # Definizione dello spazio delle velocità dx e dy
-        self.action_space = spaces.Box(low=np.array([-0.1, -0.1]), high=np.array([0.1, 0.1]), dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([-5, -5]), high=np.array([5, 5]), dtype=np.float32)
 
         # Definizione dello spazio delle osservazioni [x, y, x_target, y_target]
         obs_low = np.array([-5, -5, -5, -5], dtype=np.float32)
@@ -143,7 +143,7 @@ class TrackingEnv(gym.Env):
         # Resetta la simulazione
         mujoco.mj_resetData(self.model, self.data)
 
-        self.data.qpos[:] = np.random.uniform(low=-1, high=1, size=(4,))  # Posizione casuale dell'agente e del target
+        self.data.qpos[:] = np.random.uniform(low=-0.6, high=0.6, size=(4,))  # Posizione casuale dell'agente e del target
         self.target_center = self.data.qpos[2:4]  # Posizione iniziale del target
         # # Stato iniziale [0,0] per l'agente [1.0, 0.5] per il target
         # if target is None:
