@@ -24,7 +24,7 @@ EARLY_STOPPING_EPISODES = 30
 CHECKPOINT_INTERVAL = 500
 
 now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-RUN_DIR = f"runs/ddpg_run_{now}"
+RUN_DIR = f"runs/ddpg_run_static_target_noise{now}"
 os.makedirs(RUN_DIR, exist_ok=True)
 
 class PolicyNet(nn.Module):
@@ -36,7 +36,10 @@ class PolicyNet(nn.Module):
         nn.init.uniform_(self.fc3.weight, -3e-3, 3e-3)
         nn.init.uniform_(self.fc3.bias, -3e-3, 3e-3)
 
-    def forward(self, state):
+    def forward(self, state, training=True):
+        if training:
+            noise = torch.normal(mean=0.0, std=0.01, size=state.shape)  # noise (std half tolerance)
+            state = state + noise   # state with noise
         x = F.relu(self.fc1(state))
         x = F.relu(self.fc2(x))
         action = torch.tanh(self.fc3(x)) * 5.0
@@ -49,7 +52,10 @@ class QNet(nn.Module):
         self.fc2 = nn.Linear(NUM_NEURONS, NUM_NEURONS)
         self.fc3 = nn.Linear(NUM_NEURONS, 1)
 
-    def forward(self, state, action):
+    def forward(self, state, action, training=True):
+        if training:
+            noise = torch.normal(mean=0.0, std=0.01, size=state.shape)  # noise (std half tolerance)
+            state = state + noise   # state with noise
         x = torch.cat([state, action], dim=1)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
@@ -84,7 +90,6 @@ class DDPGAgent(nn.Module):
         self.noise_decay = 0.999
 
     def reward_function(self, state, action, next_state, step, tolerance, rimbalzato, attached_counter):
-        #reward = - torch.norm(next_state[:2] - state[2:4]) -1
         pos = state[:2]
         target = state[2:4]              # target(t)
         next_pos = next_state[:2]        # agent(t+1)
@@ -124,14 +129,14 @@ class DDPGAgent(nn.Module):
             target_Q = self.critic_target(next_states, next_actions)
             y = rewards + gamma * target_Q * (1 - dones)
 
-        current_Q = self.critic(states, actions)
+        current_Q = self.critic(states, actions, training=True)
         critic_loss = F.mse_loss(current_Q, y)
 
         self.optimizer_critic.zero_grad()
         critic_loss.backward()
         self.optimizer_critic.step()
 
-        actor_loss = -self.critic(states, self.actor(states)).mean()
+        actor_loss = -self.critic(states, self.actor(states, training=True), training=True).mean()
         self.optimizer_actor.zero_grad()
         actor_loss.backward()
         self.optimizer_actor.step()
@@ -199,7 +204,7 @@ def train_ddpg(env=None, num_episodes=6001):
         while not done:
             trajectory.append(state[:2].detach().numpy())
             target_trajectory.append(state[2:4].detach().numpy())
-            action = agent.actor(state).detach().numpy()
+            action = agent.actor(state, training=True).detach().numpy()
             noise = np.random.normal(0, agent.noise_std, size=action.shape)
             noisy_action = action + noise
             noisy_action = np.clip(noisy_action, env.action_space.low, env.action_space.high)
