@@ -21,7 +21,7 @@ LR_CRITIC = 0.0001
 GAMMA = 0.99
 TAU = 0.005
 EARLY_STOPPING_EPISODES = 30
-CHECKPOINT_INTERVAL = 50
+CHECKPOINT_INTERVAL = 500
 
 now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 RUN_DIR = f"runs/ddpg_run_{now}"
@@ -166,7 +166,7 @@ def save_trajectory_plot(trajectory, target_trajectory, episode, tag="trajectory
     plt.savefig(os.path.join(RUN_DIR, f"{tag}_ep{episode}.png"))
     plt.close()
 
-def train_ddpg(env=None, num_episodes=4000):
+def train_ddpg(env=None, num_episodes=4001):
     if env is None:
         env = TrackingEnv()
     state_dim = env.observation_space.shape[0]
