@@ -96,6 +96,14 @@ class ValueNet(nn.Module):
         self.fc1 = nn.Linear(num_inputs, NUM_NEURONS)
         self.fc2 = nn.Linear(NUM_NEURONS, NUM_NEURONS)
         self.fc3 = nn.Linear(NUM_NEURONS, 1)
+
+    def add_noise_to_target(self, state):
+        state = state.clone()
+        if state.dim() == 1:
+            state[2:4] += torch.normal(0.0, self.noise_std, size=(2,), device=state.device)
+        else:
+            state[:, 2:4] += torch.normal(0.0, self.noise_std, size=state[:, 2:4].shape, device=state.device)
+        return state
         
     def forward(self, x, training=True):
         if training:
