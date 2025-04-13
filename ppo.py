@@ -65,11 +65,11 @@ class PolicyNet(nn.Module):
     def add_noise_to_target(self, state):
         state = state.clone()
         if state.dim() == 1:
-            state[2:4] += torch.normal(0.0, self.noise_std, size=(2,), device=state.device)    # target only
-            #state += torch.normal(0.0, self.noise_std, size=(4,), device=state.device)  # whole state
+            #state[2:4] += torch.normal(0.0, self.noise_std, size=(2,), device=state.device)    # target only
+            state += torch.normal(0.0, self.noise_std, size=(4,), device=state.device)  # whole state
         else:
-            state[:, 2:4] += torch.normal(0.0, self.noise_std, size=state[:, 2:4].shape, device=state.device)  # target only
-            #state += torch.normal(0.0, self.noise_std, size=state[:, :4].shape, device=state.device)    # whole state
+            #state[:, 2:4] += torch.normal(0.0, self.noise_std, size=state[:, 2:4].shape, device=state.device)  # target only
+            state += torch.normal(0.0, self.noise_std, size=state[:, :4].shape, device=state.device)    # whole state
         return state
 
 
@@ -103,11 +103,11 @@ class ValueNet(nn.Module):
     def add_noise_to_target(self, state):
         state = state.clone()
         if state.dim() == 1:
-            state[2:4] += torch.normal(0.0, self.noise_std, size=(2,), device=state.device)    # target only
-            #state += torch.normal(0.0, self.noise_std, size=(4,), device=state.device)  # whole state
+            #state[2:4] += torch.normal(0.0, self.noise_std, size=(2,), device=state.device)    # target only
+            state += torch.normal(0.0, self.noise_std, size=(4,), device=state.device)  # whole state
         else:
-            state[:, 2:4] += torch.normal(0.0, self.noise_std, size=state[:, 2:4].shape, device=state.device)  # target only
-            #state += torch.normal(0.0, self.noise_std, size=(4,), device=state.device)  # whole state
+            #state[:, 2:4] += torch.normal(0.0, self.noise_std, size=state[:, 2:4].shape, device=state.device)  # target only
+            state += torch.normal(0.0, self.noise_std, size=(4,), device=state.device)  # whole state
         return state
         
     def forward(self, x, training=True):
