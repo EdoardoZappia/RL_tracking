@@ -24,7 +24,7 @@ EARLY_STOPPING_EPISODES = 30
 CHECKPOINT_INTERVAL = 500
 
 now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-RUN_DIR = f"runs/ddpg_run_static_target_noise{now}"
+RUN_DIR = f"runs/ddpg_run_static_target_noise_only_target{now}"
 os.makedirs(RUN_DIR, exist_ok=True)
 
 class PolicyNet(nn.Module):
@@ -38,8 +38,10 @@ class PolicyNet(nn.Module):
 
     def forward(self, state, training=True):
         if training:
-            noise = torch.normal(mean=0.0, std=0.01, size=state.shape)  # noise (std half tolerance)
-            state = state + noise   # state with noise
+            #noise = torch.normal(mean=0.0, std=0.01, size=state.shape)  # noise (std half tolerance)
+            #state = state + noise   # state with noise
+            noise = torch.normal(mean=0.0, std=0.01, size=(2,))  # noise only to the target (std half tolerance)
+            state[2:] = state[2:] + noise   # target with noise
         x = F.relu(self.fc1(state))
         x = F.relu(self.fc2(x))
         action = torch.tanh(self.fc3(x)) * 5.0
@@ -54,8 +56,10 @@ class QNet(nn.Module):
 
     def forward(self, state, action, training=True):
         if training:
-            noise = torch.normal(mean=0.0, std=0.01, size=state.shape)  # noise (std half tolerance)
-            state = state + noise   # state with noise
+            #noise = torch.normal(mean=0.0, std=0.01, size=state.shape)  # noise (std half tolerance)
+            #state = state + noise   # state with noise
+            noise = torch.normal(mean=0.0, std=0.01, size=(2,))  # noise only to the target (std half tolerance)
+            state[2:] = state[2:] + noise   # target with noise
         x = torch.cat([state, action], dim=1)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
