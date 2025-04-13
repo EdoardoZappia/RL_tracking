@@ -73,7 +73,7 @@ class PolicyNet(nn.Module):
 
     def forward(self, state, training=True):
         
-        if not training:
+        if training:
             state = self.add_noise_to_target(state)
 
         x = F.relu(self.fc1(state))
@@ -107,7 +107,7 @@ class ValueNet(nn.Module):
         return state
         
     def forward(self, x, training=True):
-        if not training:
+        if training:
             x = self.add_noise_to_target(x)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
