@@ -45,9 +45,11 @@ class PolicyNet(nn.Module):
         if training:
             if state.dim() == 1:
                 noise = torch.normal(mean=0.0, std=0.01, size=(2,), device=state.device)
+                state = state.clone()
                 state[2:4] = state[2:4] + noise
             else:
                 noise = torch.normal(mean=0.0, std=0.01, size=state[:, 2:4].shape, device=state.device)
+                state = state.clone()
                 state[:, 2:4] = state[:, 2:4] + noise
 
         x = F.relu(self.fc1(state))
@@ -71,9 +73,11 @@ class QNet(nn.Module):
         if training:
             if state.dim() == 1:
                 noise = torch.normal(mean=0.0, std=0.01, size=(2,), device=state.device)
+                state = state.clone()
                 state[2:4] = state[2:4] + noise
             else:
                 noise = torch.normal(mean=0.0, std=0.01, size=state[:, 2:4].shape, device=state.device)
+                state = state.clone()
                 state[:, 2:4] = state[:, 2:4] + noise
 
         x = torch.cat([state, action], dim=1)
