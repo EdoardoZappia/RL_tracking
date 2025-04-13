@@ -26,7 +26,7 @@ ENTROPY_COEFF = 0.01
 CHECKPOINT_INTERVAL = 500
 
 now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-RUN_DIR = f"runs/ppo_run_noise{now}"
+RUN_DIR = f"runs/ppo_run_noise_only_target{now}"
 os.makedirs(RUN_DIR, exist_ok=True)
 
 def compute_advantages(rewards, values, dones, gamma=GAMMA, lam=LAMBDA):
@@ -65,11 +65,11 @@ class PolicyNet(nn.Module):
     def add_noise_to_target(self, state):
         state = state.clone()
         if state.dim() == 1:
-            #state[2:4] += torch.normal(0.0, self.noise_std, size=(2,), device=state.device)    # target only
-            state += torch.normal(0.0, self.noise_std, size=(4,), device=state.device)  # whole state
+            state[2:4] += torch.normal(0.0, self.noise_std, size=(2,), device=state.device)    # target only
+            #state += torch.normal(0.0, self.noise_std, size=(4,), device=state.device)  # whole state
         else:
-            #state[:, 2:4] += torch.normal(0.0, self.noise_std, size=state[:, 2:4].shape, device=state.device)  # target only
-            state += torch.normal(0.0, self.noise_std, size=state[:, :4].shape, device=state.device)    # whole state
+            state[:, 2:4] += torch.normal(0.0, self.noise_std, size=state[:, 2:4].shape, device=state.device)  # target only
+            #state += torch.normal(0.0, self.noise_std, size=state[:, :4].shape, device=state.device)    # whole state
         return state
 
 
@@ -103,11 +103,11 @@ class ValueNet(nn.Module):
     def add_noise_to_target(self, state):
         state = state.clone()
         if state.dim() == 1:
-            #state[2:4] += torch.normal(0.0, self.noise_std, size=(2,), device=state.device)    # target only
-            state += torch.normal(0.0, self.noise_std, size=(4,), device=state.device)  # whole state
+            state[2:4] += torch.normal(0.0, self.noise_std, size=(2,), device=state.device)    # target only
+            #state += torch.normal(0.0, self.noise_std, size=(4,), device=state.device)  # whole state
         else:
-            #state[:, 2:4] += torch.normal(0.0, self.noise_std, size=state[:, 2:4].shape, device=state.device)  # target only
-            state += torch.normal(0.0, self.noise_std, size=(4,), device=state.device)  # whole state
+            state[:, 2:4] += torch.normal(0.0, self.noise_std, size=state[:, 2:4].shape, device=state.device)  # target only
+            #state += torch.normal(0.0, self.noise_std, size=(4,), device=state.device)  # whole state
         return state
         
     def forward(self, x, training=True):
@@ -151,10 +151,10 @@ class PPOAgent(nn.Module):
         dist_after = torch.norm(next_pos - target)  # sempre verso target(t)
         progress = dist_before - dist_after
 
-        reward = - 5 * direction_penalty #+ progress
+        reward = - direction_penalty #+ progress
 
         if torch.norm(next_state[:2] - state[2:4]) < tolerance:
-            reward += 100 #50
+            reward += 50
         
         if rimbalzato:
             reward -= 5
