@@ -37,11 +37,19 @@ class PolicyNet(nn.Module):
         nn.init.uniform_(self.fc3.bias, -3e-3, 3e-3)
 
     def forward(self, state, training=True):
-        if training:
+        #if training:
             #noise = torch.normal(mean=0.0, std=0.01, size=state.shape)  # noise (std half tolerance)
             #state = state + noise   # state with noise
-            noise = torch.normal(mean=0.0, std=0.01, size=(2,))  # noise only to the target (std half tolerance)
-            state[2:] = state[2:] + noise   # target with noise
+
+        # Per gestire batch e singoli stati
+        if training:
+            if state.dim() == 1:
+                noise = torch.normal(mean=0.0, std=0.01, size=(2,), device=state.device)
+                state[2:4] = state[2:4] + noise
+            else:
+                noise = torch.normal(mean=0.0, std=0.01, size=state[:, 2:4].shape, device=state.device)
+                state[:, 2:4] = state[:, 2:4] + noise
+
         x = F.relu(self.fc1(state))
         x = F.relu(self.fc2(x))
         action = torch.tanh(self.fc3(x)) * 5.0
@@ -55,11 +63,19 @@ class QNet(nn.Module):
         self.fc3 = nn.Linear(NUM_NEURONS, 1)
 
     def forward(self, state, action, training=True):
-        if training:
+        #if training:
             #noise = torch.normal(mean=0.0, std=0.01, size=state.shape)  # noise (std half tolerance)
             #state = state + noise   # state with noise
-            noise = torch.normal(mean=0.0, std=0.01, size=(2,))  # noise only to the target (std half tolerance)
-            state[2:] = state[2:] + noise   # target with noise
+
+        # Per gestire batch e singoli stati
+        if training:
+            if state.dim() == 1:
+                noise = torch.normal(mean=0.0, std=0.01, size=(2,), device=state.device)
+                state[2:4] = state[2:4] + noise
+            else:
+                noise = torch.normal(mean=0.0, std=0.01, size=state[:, 2:4].shape, device=state.device)
+                state[:, 2:4] = state[:, 2:4] + noise
+
         x = torch.cat([state, action], dim=1)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
