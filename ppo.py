@@ -26,7 +26,7 @@ ENTROPY_COEFF = 0.01
 CHECKPOINT_INTERVAL = 500
 
 now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-RUN_DIR = f"runs/ppo_run{now}"
+RUN_DIR = f"runs/ppo_run_noise_only_target{now}"
 os.makedirs(RUN_DIR, exist_ok=True)
 
 def compute_advantages(rewards, values, dones, gamma=GAMMA, lam=LAMBDA):
@@ -51,7 +51,7 @@ class PolicyNet(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(PolicyNet, self).__init__()
 
-        self.noise_std = 0 #0.01
+        self.noise_std = 0.01
         
         self.fc1 = nn.Linear(state_dim, NUM_NEURONS)
         self.fc2 = nn.Linear(NUM_NEURONS, NUM_NEURONS)
