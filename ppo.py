@@ -147,10 +147,10 @@ class PPOAgent(nn.Module):
         dist_after = torch.norm(next_pos - target)  # sempre verso target(t)
         progress = dist_before - dist_after
 
-        reward = - direction_penalty #+ progress
+        reward = - 5 * direction_penalty #+ progress
 
         if torch.norm(next_state[:2] - state[2:4]) < tolerance:
-            reward += 50
+            reward += 100 #50
         
         if rimbalzato:
             reward -= 5
