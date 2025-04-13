@@ -26,7 +26,7 @@ ENTROPY_COEFF = 0.01
 CHECKPOINT_INTERVAL = 500
 
 now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-RUN_DIR = f"runs/ppo_run_noise_only_target{now}"
+RUN_DIR = f"runs/ppo_run_noise{now}"
 os.makedirs(RUN_DIR, exist_ok=True)
 
 def compute_advantages(rewards, values, dones, gamma=GAMMA, lam=LAMBDA):
