@@ -142,7 +142,7 @@ class DDPGAgent(nn.Module):
         if attached_counter > 0 and torch.norm(next_state[:2] - state[2:4]) > tolerance:
             reward -= 10
 
-        return reward - 1
+        return reward - 1, attached_counter
 
     def update(self, gamma=GAMMA, tau=TAU, device='cpu'):
         if len(self.buffer) < self.batch_size:
