@@ -107,8 +107,8 @@ class DDPGAgent(nn.Module):
         self.critic_target = QNet(state_dim, action_dim)
         self.optimizer_actor = optim.Adam(self.actor.parameters(), lr=LR_ACTOR)
         self.optimizer_critic = optim.Adam(self.critic.parameters(), lr=LR_CRITIC)
-        #self.buffer = ReplayBuffer(50000)
-        self.buffer = ReplayBuffer(10000)
+        self.buffer = ReplayBuffer(50000)
+        #self.buffer = ReplayBuffer(10000)
         self.batch_size = 128
         self.noise_std = 0.5
         self.min_noise_std = 0.01
@@ -132,7 +132,7 @@ class DDPGAgent(nn.Module):
 
         if torch.norm(next_state[:2] - state[2:4]) < tolerance:
             attached_counter += 1
-            reward += 100 #+ attached_counter * 5
+            reward += 100 + attached_counter * 2
         else:
             attached_counter = 0
         
@@ -261,7 +261,7 @@ def train_ddpg(env=None, num_episodes=6001):
             
             transition = (state.numpy(), action_tensor.numpy(), reward, next_state.numpy(), float(done))
             agent.buffer.push(transition)
-            if len(agent.buffer) > 500: #1000:
+            if len(agent.buffer) > 1000:
                 agent.update()
             state = next_state
             total_reward += reward
