@@ -140,7 +140,7 @@ class DDPGAgent(nn.Module):
             reward -= 5
 
         if attached_counter > 0 and torch.norm(next_state[:2] - state[2:4]) > tolerance:
-            reward -= 10
+            reward -= 200   # non conviene entrare e uscire per non far finire l'episodio
 
         return reward - 1, attached_counter
 
@@ -232,6 +232,7 @@ def train_ddpg(env=None, num_episodes=6001):
         agent.noise_std = max(agent.min_noise_std, agent.noise_std * agent.noise_decay)
         trajectory, target_trajectory = [], []
         attached_counter = 0
+        total_attached_counter = 0
 
         while not done:
             trajectory.append(state[:2].detach().numpy())
@@ -249,6 +250,9 @@ def train_ddpg(env=None, num_episodes=6001):
             #     attached_counter = 0
             # else:
             #     attached_counter += 1
+
+            if torch.norm(next_state[:2] - state[2:4]) < tolerance:
+                total_attached_counter += 1
             
             reward, attached_counter = agent.reward_function(state, action_tensor, next_state, 0, tolerance, rimbalzato, attached_counter)
             
@@ -273,7 +277,7 @@ def train_ddpg(env=None, num_episodes=6001):
         reward_history.append(total_reward)
 
         if episode % 10 == 0:
-            print(f"Episode {episode}, Reward: {total_reward:.2f}, Attached_counter: {attached_counter}, Successes: {counter}")
+            print(f"Episode {episode}, Reward: {total_reward:.2f}, Attached_counter: {attached_counter}, Total attached counter: {total_attached_counter}, Successes: {counter}")
         if episode % CHECKPOINT_INTERVAL == 0 and episode > 0:
             save_checkpoint(agent, episode)
         if episode % 500 == 0 and episode > 0:
