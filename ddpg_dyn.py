@@ -261,7 +261,7 @@ def train_ddpg(env=None, num_episodes=6001):
             
             transition = (state.numpy(), action_tensor.numpy(), reward, next_state.numpy(), float(done))
             agent.buffer.push(transition)
-            if len(agent.buffer) > 1000:
+            if len(agent.buffer) > 600  #1000:
                 agent.update()
             state = next_state
             total_reward += reward
