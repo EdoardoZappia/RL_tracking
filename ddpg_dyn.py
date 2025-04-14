@@ -131,10 +131,16 @@ class DDPGAgent(nn.Module):
         reward = - 5 * direction_penalty #+ progress
 
         if torch.norm(next_state[:2] - state[2:4]) < tolerance:
+            attached_counter += 1
             reward += 100 + attached_counter * 5
+        else:
+            attached_counter = 0
         
         if rimbalzato:
             reward -= 5
+
+        if attached_counter > 0 and torch.norm(next_state[:2] - state[2:4]) > tolerance:
+            reward -= 10
 
         return reward - 1
 
@@ -243,14 +249,12 @@ def train_ddpg(env=None, num_episodes=6001):
             #     attached_counter = 0
             # else:
             #     attached_counter += 1
-
-            if torch.norm(next_state[:2] - state[2:4]) < tolerance:
-                attached_counter += 1
             
-            if attached_counter > 20 or truncated or (torch.norm(next_state[:2] - state[2:4]) > tolerance and attached_counter > 0):
+            reward, attached_counter = agent.reward_function(state, action_tensor, next_state, 0, tolerance, rimbalzato, attached_counter)
+            
+            if attached_counter > 20 or truncated:
                 done = True
-
-            reward = agent.reward_function(state, action_tensor, next_state, 0, tolerance, rimbalzato, attached_counter)
+            
             transition = (state.numpy(), action_tensor.numpy(), reward, next_state.numpy(), float(done))
             agent.buffer.push(transition)
             if len(agent.buffer) > 500: #1000:
