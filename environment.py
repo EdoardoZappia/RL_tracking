@@ -36,7 +36,7 @@ class TrackingEnv(gym.Env):
         self.renderer = None
         self.step_counter = 0
         #self.max_steps = 400   per target statico
-        self.max_steps = 200  # per target dinamico
+        self.max_steps = 100  # per target dinamico
 
     def rimbalzo(self):
         # Ottieni la posizione attuale
