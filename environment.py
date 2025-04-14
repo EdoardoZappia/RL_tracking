@@ -35,7 +35,8 @@ class TrackingEnv(gym.Env):
         self.render_mode = render_mode
         self.renderer = None
         self.step_counter = 0
-        self.max_steps = 400
+        #self.max_steps = 400   per target statico
+        self.max_steps = 200  # per target dinamico
 
     def rimbalzo(self):
         # Ottieni la posizione attuale
@@ -87,16 +88,16 @@ class TrackingEnv(gym.Env):
 
         target_pos = self.data.qpos[2:4]
 
-        # # Movimento casuale vincolato in un cerchio di raggio 0.08
-        # movement = np.random.uniform(low=-0.005, high=0.005, size=2)  # piccolo spostamento casuale
-        # proposed_pos = target_pos + movement
-        # proposed_pos = torch.tensor(proposed_pos, dtype=torch.float32)
+        # Movimento casuale vincolato in un cerchio di raggio 1
+        movement = np.random.uniform(low=-0.01, high=0.01, size=2)  # piccolo spostamento casuale
+        proposed_pos = target_pos + movement
+        proposed_pos = torch.tensor(proposed_pos, dtype=torch.float32)
 
-        # # Calcola distanza dalla posizione iniziale
-        # displacement = proposed_pos - self.target_center
-        # if np.linalg.norm(displacement) <= 0.1:
-        #     self.data.qpos[2:4] = proposed_pos  # accetta lo spostamento
-        # # else: nessun movimento (rimane fermo)
+        # Calcola distanza dalla posizione iniziale
+        displacement = proposed_pos - self.target_center
+        if np.linalg.norm(displacement) <= 1 and proposed_pos[0] >= -2 and proposed_pos[0] <= 2 and proposed_pos[1] >= -2 and proposed_pos[1] <= 2:
+            self.data.qpos[2:4] = proposed_pos  # accetta lo spostamento
+        # else: nessun movimento (rimane fermo)
 
         # # Movimento rettilineo
         # self.data.qpos[2:4] += self.target_velocity
