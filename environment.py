@@ -89,7 +89,7 @@ class TrackingEnv(gym.Env):
         target_pos = self.data.qpos[2:4]
 
         # Movimento casuale vincolato in un cerchio di raggio 1
-        movement = np.random.uniform(low=-0.5, high=0.5, size=2)  # spostamento casuale
+        movement = np.random.uniform(low=-0.1, high=0.1, size=2)  # spostamento casuale
         proposed_pos = target_pos + movement
         proposed_pos = torch.tensor(proposed_pos, dtype=torch.float32)
 
