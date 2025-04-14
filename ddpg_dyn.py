@@ -132,15 +132,15 @@ class DDPGAgent(nn.Module):
 
         if torch.norm(next_state[:2] - state[2:4]) < tolerance:
             attached_counter += 1
-            reward += 100 + attached_counter * 5
+            reward += 100 #+ attached_counter * 5
         else:
             attached_counter = 0
         
         if rimbalzato:
             reward -= 5
 
-        if attached_counter > 0 and torch.norm(next_state[:2] - state[2:4]) > tolerance:
-            reward -= 200   # non conviene entrare e uscire per non far finire l'episodio
+        #if attached_counter > 0 and torch.norm(next_state[:2] - state[2:4]) > tolerance:
+        #    reward -= 200   # non conviene entrare e uscire per non far finire l'episodio
 
         return reward - 1, attached_counter
 
