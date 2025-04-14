@@ -21,7 +21,7 @@ LR_CRITIC = 0.001
 GAMMA = 0.99
 TAU = 0.005
 EARLY_STOPPING_EPISODES = 30
-CHECKPOINT_INTERVAL = 500
+CHECKPOINT_INTERVAL = 100
 
 now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 RUN_DIR = f"runs/ddpg_run_dyn{now}"
@@ -214,7 +214,7 @@ def save_trajectory_plot(trajectory, target_trajectory, episode, tag="trajectory
     plt.savefig(os.path.join(RUN_DIR, f"{tag}_ep{episode}.png"))
     plt.close()
 
-def train_ddpg(env=None, num_episodes=6001):
+def train_ddpg(env=None, num_episodes=1201):
     if env is None:
         env = TrackingEnv()
     state_dim = env.observation_space.shape[0]
@@ -280,7 +280,7 @@ def train_ddpg(env=None, num_episodes=6001):
             print(f"Episode {episode}, Reward: {total_reward:.2f}, Attached_counter: {attached_counter}, Total attached counter: {total_attached_counter}, Successes: {counter}")
         if episode % CHECKPOINT_INTERVAL == 0 and episode > 0:
             save_checkpoint(agent, episode)
-        if episode % 500 == 0 and episode > 0:
+        if episode % 50 == 0 and episode > 0:
             save_trajectory_plot(trajectory, target_trajectory, episode)
 
     np.save(os.path.join(RUN_DIR, 'rewards.npy'), reward_history)
