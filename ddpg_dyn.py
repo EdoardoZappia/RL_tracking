@@ -107,7 +107,8 @@ class DDPGAgent(nn.Module):
         self.critic_target = QNet(state_dim, action_dim)
         self.optimizer_actor = optim.Adam(self.actor.parameters(), lr=LR_ACTOR)
         self.optimizer_critic = optim.Adam(self.critic.parameters(), lr=LR_CRITIC)
-        self.buffer = ReplayBuffer(50000)
+        #self.buffer = ReplayBuffer(50000)
+        self.buffer = ReplayBuffer(10000)
         self.batch_size = 128
         self.noise_std = 0.5
         self.min_noise_std = 0.01
@@ -130,7 +131,7 @@ class DDPGAgent(nn.Module):
         reward = - 5 * direction_penalty #+ progress
 
         if torch.norm(next_state[:2] - state[2:4]) < tolerance:
-            reward += 100 + attached_counter * 10
+            reward += 100 + attached_counter * 5
         
         if rimbalzato:
             reward -= 5
@@ -207,7 +208,7 @@ def save_trajectory_plot(trajectory, target_trajectory, episode, tag="trajectory
     plt.savefig(os.path.join(RUN_DIR, f"{tag}_ep{episode}.png"))
     plt.close()
 
-def train_ddpg(env=None, num_episodes=10001):
+def train_ddpg(env=None, num_episodes=2001):
     if env is None:
         env = TrackingEnv()
     state_dim = env.observation_space.shape[0]
