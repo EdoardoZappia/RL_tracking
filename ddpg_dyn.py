@@ -251,6 +251,7 @@ def train_ddpg(env=None, num_episodes=6001):
 
             if torch.norm(next_state[:2] - state[2:4]) < tolerance:
                 total_attached_counter += 1
+                attached_counter += 1
             
             reward, attached_counter = agent.reward_function(state, action_tensor, next_state, 0, tolerance, rimbalzato, attached_counter)
             
