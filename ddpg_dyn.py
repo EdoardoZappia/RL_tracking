@@ -282,6 +282,12 @@ def train_ddpg(env=None, num_episodes=8001):
         if episode % 50 == 0 and episode > 0:
             save_trajectory_plot(trajectory, target_trajectory, episode)
 
+        if len(reward_history) > EARLY_STOPPING_EPISODES and np.mean(reward_history[-EARLY_STOPPING_EPISODES:]) > 2000:
+           print(f"Early stopping at episode {episode}")
+           save_checkpoint(agent, episode)
+           save_trajectory_plot(trajectory, target_trajectory, episode)
+           break
+
     np.save(os.path.join(RUN_DIR, 'rewards.npy'), reward_history)
     np.save(os.path.join(RUN_DIR, 'successes.npy'), success_history)
     plot_and_save(reward_history, success_history)
