@@ -244,17 +244,17 @@ def train_ddpg(env=None, num_episodes=6001):
             next_state, _, done, truncated, _, rimbalzato = env.step(noisy_action)
             next_state = torch.tensor(next_state, dtype=torch.float32)
 
-            if torch.norm(next_state[:2] - state[2:4]) > tolerance:
-                attached_counter = 0
-            else:
-                attached_counter += 1
+            # if torch.norm(next_state[:2] - state[2:4]) > tolerance:
+            #     attached_counter = 0
+            # else:
+            #     attached_counter += 1
 
             if torch.norm(next_state[:2] - state[2:4]) < tolerance:
                 total_attached_counter += 1
             
             reward, attached_counter = agent.reward_function(state, action_tensor, next_state, 0, tolerance, rimbalzato, attached_counter)
             
-            if attached_counter > 20 or truncated or (attached_counter > 0 and torch.norm(next_state[:2] - state[2:4]) > tolerance):
+            if attached_counter > 20 or truncated or (total_attached_counter > 0 and torch.norm(next_state[:2] - state[2:4]) > tolerance):
                 done = True
             
             transition = (state.numpy(), action_tensor.numpy(), reward, next_state.numpy(), float(done))
