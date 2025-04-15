@@ -124,19 +124,15 @@ class DDPGAgent(nn.Module):
         direction_reward = torch.dot(action_dir, to_target)
         direction_penalty = 1.0 - direction_reward
 
-        dist_before = torch.norm(pos - target)
-        dist_after = torch.norm(next_pos - target)  # sempre verso target(t)
-        progress = dist_before - dist_after
+        reward = - 5 * direction_penalty 
 
-        reward = - 5 * direction_penalty #+ progress
-
-        if attached_counter > 0 and torch.norm(next_state[:2] - state[2:4]) > tolerance:
-            reward -= 50   # non conviene entrare e uscire per non far finire l'episodio
+        #if attached_counter > 0 and torch.norm(next_state[:2] - state[2:4]) > tolerance:
+        #    reward -= 50   # non conviene entrare e uscire per non far finire l'episodio
 
         if torch.norm(next_state[:2] - state[2:4]) < tolerance:
-            attached_counter += 1
+            #attached_counter += 1
             #reward += 100 + attached_counter * 2
-            reward += 10 + attached_counter * 2
+            reward += 100 #+ attached_counter * 2
         else:
             attached_counter = 0
         
@@ -248,17 +244,17 @@ def train_ddpg(env=None, num_episodes=6001):
             next_state, _, done, truncated, _, rimbalzato = env.step(noisy_action)
             next_state = torch.tensor(next_state, dtype=torch.float32)
 
-            # if torch.norm(next_state[:2] - state[2:4]) > tolerance:
-            #     attached_counter = 0
-            # else:
-            #     attached_counter += 1
+            if torch.norm(next_state[:2] - state[2:4]) > tolerance:
+                attached_counter = 0
+            else:
+                attached_counter += 1
 
             if torch.norm(next_state[:2] - state[2:4]) < tolerance:
                 total_attached_counter += 1
             
             reward, attached_counter = agent.reward_function(state, action_tensor, next_state, 0, tolerance, rimbalzato, attached_counter)
             
-            if attached_counter > 20 or truncated:
+            if attached_counter > 20 or truncated or (attached_counter > 0 and torch.norm(next_state[:2] - state[2:4]) > tolerance):
                 done = True
             
             transition = (state.numpy(), action_tensor.numpy(), reward, next_state.numpy(), float(done))
