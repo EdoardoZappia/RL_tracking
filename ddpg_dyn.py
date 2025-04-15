@@ -107,8 +107,9 @@ class DDPGAgent(nn.Module):
         self.critic_target = QNet(state_dim, action_dim)
         self.optimizer_actor = optim.Adam(self.actor.parameters(), lr=LR_ACTOR)
         self.optimizer_critic = optim.Adam(self.critic.parameters(), lr=LR_CRITIC)
-        #self.buffer = ReplayBuffer(50000)
-        self.buffer = ReplayBuffer(20000)
+        #self.buffer = ReplayBuffer(50000) statico
+        #self.buffer = ReplayBuffer(20000) dinamico
+        self.buffer = ReplayBuffer(10200)
         self.batch_size = 128
         self.noise_std = 0.5
         self.min_noise_std = 0.01
@@ -212,7 +213,7 @@ def save_trajectory_plot(trajectory, target_trajectory, episode, tag="trajectory
     plt.savefig(os.path.join(RUN_DIR, f"{tag}_ep{episode}.png"))
     plt.close()
 
-def train_ddpg(env=None, num_episodes=2001):
+def train_ddpg(env=None, num_episodes=8001):
     if env is None:
         env = TrackingEnv()
     state_dim = env.observation_space.shape[0]
