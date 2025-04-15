@@ -135,7 +135,8 @@ class DDPGAgent(nn.Module):
 
         if torch.norm(next_state[:2] - state[2:4]) < tolerance:
             attached_counter += 1
-            reward += 100 + attached_counter * 2
+            #reward += 100 + attached_counter * 2
+            reward += 10 + attached_counter * 2
         else:
             attached_counter = 0
         
