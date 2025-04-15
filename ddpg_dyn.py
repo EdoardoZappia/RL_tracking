@@ -130,6 +130,9 @@ class DDPGAgent(nn.Module):
 
         reward = - 5 * direction_penalty #+ progress
 
+        if attached_counter > 0 and torch.norm(next_state[:2] - state[2:4]) > tolerance:
+            reward -= 200   # non conviene entrare e uscire per non far finire l'episodio
+
         if torch.norm(next_state[:2] - state[2:4]) < tolerance:
             attached_counter += 1
             reward += 100 + attached_counter * 2
@@ -139,9 +142,7 @@ class DDPGAgent(nn.Module):
         if rimbalzato:
             reward -= 5
 
-        #if attached_counter > 0 and torch.norm(next_state[:2] - state[2:4]) > tolerance:
-        #    reward -= 200   # non conviene entrare e uscire per non far finire l'episodio
-
+        
         return reward - 1, attached_counter
 
     def update(self, gamma=GAMMA, tau=TAU, device='cpu'):
