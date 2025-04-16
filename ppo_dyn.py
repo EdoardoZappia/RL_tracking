@@ -23,7 +23,8 @@ LAMBDA = 0.95
 CLIP_EPS = 0.2
 K_EPOCH = 10
 ENTROPY_COEFF = 0.01
-CHECKPOINT_INTERVAL = 500
+CHECKPOINT_INTERVAL = 100
+EARLY_STOPPING_EPISODES = 30
 
 now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 RUN_DIR = f"runs/ppo_run_target_dyn{now}"
@@ -150,7 +151,7 @@ class PPOAgent(nn.Module):
         reward = - direction_penalty 
 
         if torch.norm(next_state[:2] - state[2:4]) < tolerance:
-            reward += 2 + 0.5 * attached_counter
+            reward += 100 #+ 0.5 * attached_counter
         
         if rimbalzato:
             reward -= 5
@@ -260,17 +261,21 @@ def train_ppo(env=None, num_episodes=10001):
             action, log_prob = agent.get_action(state)
             next_state, _, done, truncated, _, rimbalzato = env.step(action)
             next_state = torch.tensor(next_state, dtype=torch.float32)
+
             if torch.norm(next_state[:2] - state[2:4]) > tolerance:
                 attached_counter = 0
             else:
                 attached_counter += 1
-            done = truncated
+
+            if attached_counter > 20 or truncated or (total_attached_counter > 0 and torch.norm(next_state[:2] - state[2:4]) > tolerance):
+                done = True
+
             reward = agent.reward_function(state, action, next_state, tolerance, rimbalzato, attached_counter)
             agent.store_transition((state, action, reward, done, log_prob))
             state = next_state
             total_reward += reward
 
-        if attached_counter >= 30:
+        if attached_counter > 20:
             counter += 1
             success_history.append(1)
             if counter % 100 == 0:
@@ -284,6 +289,12 @@ def train_ppo(env=None, num_episodes=10001):
             print(f"Episode: {episode}, Reward: {total_reward:.2f}, Successes: {counter}")
             save_trajectory_plot(trajectory, target_trajectory, episode)
             save_checkpoint(agent, episode)
+
+        if len(reward_history) > EARLY_STOPPING_EPISODES and np.mean(reward_history[-EARLY_STOPPING_EPISODES:]) > 2000:
+           print(f"Early stopping at episode {episode}")
+           save_checkpoint(agent, episode)
+           save_trajectory_plot(trajectory, target_trajectory, episode)
+           break
 
         if len(agent.buffer) >= MAX_MEMORY:
             agent.update()
