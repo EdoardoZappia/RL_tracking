@@ -24,7 +24,7 @@ EARLY_STOPPING_EPISODES = 30
 CHECKPOINT_INTERVAL = 100
 
 now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-RUN_DIR = f"runs/ddpg_run_dyn{now}"
+RUN_DIR = f"runs/ddpg_run_dyn_noise_target{now}"
 os.makedirs(RUN_DIR, exist_ok=True)
 
 class PolicyNet(nn.Module):
@@ -42,15 +42,15 @@ class PolicyNet(nn.Module):
             #state = state + noise   # state with noise
 
         # Per gestire batch e singoli stati
-        # if training:
-        #     if state.dim() == 1:
-        #         noise = torch.normal(mean=0.0, std=0.01, size=(2,), device=state.device)
-        #         state = state.clone()
-        #         state[2:4] = state[2:4] + noise
-        #     else:
-        #         noise = torch.normal(mean=0.0, std=0.01, size=state[:, 2:4].shape, device=state.device)
-        #         state = state.clone()
-        #         state[:, 2:4] = state[:, 2:4] + noise
+        if training:
+            if state.dim() == 1:
+                noise = torch.normal(mean=0.0, std=0.01, size=(2,), device=state.device)
+                state = state.clone()
+                state[2:4] = state[2:4] + noise
+            else:
+                noise = torch.normal(mean=0.0, std=0.01, size=state[:, 2:4].shape, device=state.device)
+                state = state.clone()
+                state[:, 2:4] = state[:, 2:4] + noise
 
         x = F.relu(self.fc1(state))
         x = F.relu(self.fc2(x))
@@ -70,15 +70,15 @@ class QNet(nn.Module):
             #state = state + noise   # state with noise
 
         # Per gestire batch e singoli stati
-        # if training:
-        #     if state.dim() == 1:
-        #         noise = torch.normal(mean=0.0, std=0.01, size=(2,), device=state.device)
-        #         state = state.clone()
-        #         state[2:4] = state[2:4] + noise
-        #     else:
-        #         noise = torch.normal(mean=0.0, std=0.01, size=state[:, 2:4].shape, device=state.device)
-        #         state = state.clone()
-        #         state[:, 2:4] = state[:, 2:4] + noise
+        if training:
+            if state.dim() == 1:
+                noise = torch.normal(mean=0.0, std=0.01, size=(2,), device=state.device)
+                state = state.clone()
+                state[2:4] = state[2:4] + noise
+            else:
+                noise = torch.normal(mean=0.0, std=0.01, size=state[:, 2:4].shape, device=state.device)
+                state = state.clone()
+                state[:, 2:4] = state[:, 2:4] + noise
 
         x = torch.cat([state, action], dim=1)
         x = F.relu(self.fc1(x))
