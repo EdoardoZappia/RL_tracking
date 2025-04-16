@@ -24,7 +24,7 @@ EARLY_STOPPING_EPISODES = 50
 CHECKPOINT_INTERVAL = 100
 
 now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-RUN_DIR = f"runs/ddpg_run_dyn{now}"
+RUN_DIR = f"runs/ddpg_run_dyn_noise_target{now}"
 os.makedirs(RUN_DIR, exist_ok=True)
 
 class PolicyNet(nn.Module):
