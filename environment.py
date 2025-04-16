@@ -145,7 +145,8 @@ class TrackingEnv(gym.Env):
         mujoco.mj_resetData(self.model, self.data)
 
         #self.data.qpos[:] = np.random.uniform(low=-0.6, high=0.6, size=(4,))  # Posizione casuale dell'agente e del target
-        self.data.qpos[:] = np.random.uniform(low=-0.2, high=0.2, size=(4,))  # Posizione casuale dell'agente e del target
+        #self.data.qpos[:] = np.random.uniform(low=-0.2, high=0.2, size=(4,))  # Posizione casuale dell'agente e del target
+        self.data.qpos[:] = np.random.uniform(low=-0.01, high=0.01, size=(4,))  # Posizione casuale dell'agente e del target
         self.target_center = self.data.qpos[2:4]  # Posizione iniziale del target
         # # Stato iniziale [0,0] per l'agente [1.0, 0.5] per il target
         # if target is None:
