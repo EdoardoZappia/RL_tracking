@@ -14,7 +14,7 @@ SEED = 42
 torch.manual_seed(SEED)
 np.random.seed(SEED)
 
-MAX_MEMORY = 4000
+MAX_MEMORY = 400   #4000
 NUM_NEURONS = 256
 LR_CRITIC = 0.0001
 LR_ACTOR = 0.0005
