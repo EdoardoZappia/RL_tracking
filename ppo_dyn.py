@@ -253,6 +253,7 @@ def train_ppo(env=None, num_episodes=10001):
         target_trajectory = []
         step = 0
         attached_counter = 0
+        total_attached_counter = 0
 
         while not done:
             step += 1
@@ -266,8 +267,9 @@ def train_ppo(env=None, num_episodes=10001):
                 attached_counter = 0
             else:
                 attached_counter += 1
+                total_attached_counter += 1
 
-            if attached_counter > 20 or truncated or (total_attached_counter > 0 and torch.norm(next_state[:2] - state[2:4]) > tolerance):
+            if attached_counter > 20 or truncated or (total_attached_counter > 0 and attached_counter == 0):
                 done = True
 
             reward = agent.reward_function(state, action, next_state, tolerance, rimbalzato, attached_counter)
