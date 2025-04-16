@@ -287,8 +287,11 @@ def train_ppo(env=None, num_episodes=10001):
 
         reward_history.append(total_reward)
 
+        if episode % 10 == 0:
+            print(f"Episode {episode}, Reward: {total_reward:.2f}, Attached_counter: {attached_counter}, Total attached counter: {total_attached_counter}, Successes: {counter}")
+
         if episode % 100 == 0:
-            print(f"Episode: {episode}, Reward: {total_reward:.2f}, Successes: {counter}")
+            #print(f"Episode: {episode}, Reward: {total_reward:.2f}, Successes: {counter}")
             save_trajectory_plot(trajectory, target_trajectory, episode)
             save_checkpoint(agent, episode)
 
