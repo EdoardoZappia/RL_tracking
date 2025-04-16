@@ -16,8 +16,8 @@ torch.manual_seed(SEED)
 np.random.seed(SEED)
 
 NUM_NEURONS = 256
-LR_ACTOR = 0.001
-LR_CRITIC = 0.0008  #0.001
+LR_ACTOR = 0.0001
+LR_CRITIC = 0.001    #0.0008  #0.001
 GAMMA = 0.99
 TAU = 0.005
 EARLY_STOPPING_EPISODES = 30
@@ -44,11 +44,11 @@ class PolicyNet(nn.Module):
         # Per gestire batch e singoli stati
         if training:
             if state.dim() == 1:
-                noise = torch.normal(mean=0.0, std=0.001, size=(2,), device=state.device)
+                noise = torch.normal(mean=0.0, std=0.01, size=(2,), device=state.device)
                 state = state.clone()
                 state[2:4] = state[2:4] + noise
             else:
-                noise = torch.normal(mean=0.0, std=0.001, size=state[:, 2:4].shape, device=state.device)
+                noise = torch.normal(mean=0.0, std=0.01, size=state[:, 2:4].shape, device=state.device)
                 state = state.clone()
                 state[:, 2:4] = state[:, 2:4] + noise
 
@@ -72,11 +72,11 @@ class QNet(nn.Module):
         # Per gestire batch e singoli stati
         if training:
             if state.dim() == 1:
-                noise = torch.normal(mean=0.0, std=0.001, size=(2,), device=state.device)
+                noise = torch.normal(mean=0.0, std=0.01, size=(2,), device=state.device)
                 state = state.clone()
                 state[2:4] = state[2:4] + noise
             else:
-                noise = torch.normal(mean=0.0, std=0.001, size=state[:, 2:4].shape, device=state.device)
+                noise = torch.normal(mean=0.0, std=0.01, size=state[:, 2:4].shape, device=state.device)
                 state = state.clone()
                 state[:, 2:4] = state[:, 2:4] + noise
 
