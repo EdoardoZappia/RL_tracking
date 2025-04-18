@@ -276,6 +276,7 @@ def train_ddpg(env=None, num_episodes=10001):
             if len(agent.buffer) > 1000:
                 agent.update()
             state = next_state
+            real_state = real_next_state
             total_reward += reward
 
         if attached_counter > 20:
