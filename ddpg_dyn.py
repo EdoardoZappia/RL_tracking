@@ -108,10 +108,10 @@ class DDPGAgent(nn.Module):
         self.critic_target = QNet(state_dim, action_dim)
         self.optimizer_actor = optim.Adam(self.actor.parameters(), lr=LR_ACTOR)
         self.optimizer_critic = optim.Adam(self.critic.parameters(), lr=LR_CRITIC)
-        #self.buffer = ReplayBuffer(50000) #statico
-        self.buffer = ReplayBuffer(100000)
+        self.buffer = ReplayBuffer(50000) #statico
         #self.buffer = ReplayBuffer(20000) #dinamico
-        self.batch_size = 128
+        #self.batch_size = 128   # dinamico non rumoroso
+        self.batch_size = 256
         self.noise_std = 0.5
         self.min_noise_std = 0.01
         self.noise_decay = 0.999
