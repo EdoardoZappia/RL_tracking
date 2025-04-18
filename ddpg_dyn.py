@@ -36,21 +36,22 @@ class PolicyNet(nn.Module):
         nn.init.uniform_(self.fc3.weight, -3e-3, 3e-3)
         nn.init.uniform_(self.fc3.bias, -3e-3, 3e-3)
 
-    def forward(self, state, training=True):
+    def forward(self, state):#, training=True):
+
         #if training:
             #noise = torch.normal(mean=0.0, std=0.01, size=state.shape)  # noise (std half tolerance)
             #state = state + noise   # state with noise
 
         # Per gestire batch e singoli stati
-        if training:
-            if state.dim() == 1:
-                noise = torch.normal(mean=0.0, std=0.01, size=(2,), device=state.device)
-                state = state.clone()
-                state[2:4] = state[2:4] + noise
-            else:
-                noise = torch.normal(mean=0.0, std=0.01, size=state[:, 2:4].shape, device=state.device)
-                state = state.clone()
-                state[:, 2:4] = state[:, 2:4] + noise
+        # if training:
+        #     if state.dim() == 1:
+        #         noise = torch.normal(mean=0.0, std=0.01, size=(2,), device=state.device)
+        #         state = state.clone()
+        #         state[2:4] = state[2:4] + noise
+        #     else:
+        #         noise = torch.normal(mean=0.0, std=0.01, size=state[:, 2:4].shape, device=state.device)
+        #         state = state.clone()
+        #         state[:, 2:4] = state[:, 2:4] + noise
 
         x = F.relu(self.fc1(state))
         x = F.relu(self.fc2(x))
@@ -64,21 +65,21 @@ class QNet(nn.Module):
         self.fc2 = nn.Linear(NUM_NEURONS, NUM_NEURONS)
         self.fc3 = nn.Linear(NUM_NEURONS, 1)
 
-    def forward(self, state, action, training=True):
+    def forward(self, state, action):#, training=True):
         #if training:
             #noise = torch.normal(mean=0.0, std=0.01, size=state.shape)  # noise (std half tolerance)
             #state = state + noise   # state with noise
 
         # Per gestire batch e singoli stati
-        if training:
-            if state.dim() == 1:
-                noise = torch.normal(mean=0.0, std=0.01, size=(2,), device=state.device)
-                state = state.clone()
-                state[2:4] = state[2:4] + noise
-            else:
-                noise = torch.normal(mean=0.0, std=0.01, size=state[:, 2:4].shape, device=state.device)
-                state = state.clone()
-                state[:, 2:4] = state[:, 2:4] + noise
+        # if training:
+        #     if state.dim() == 1:
+        #         noise = torch.normal(mean=0.0, std=0.01, size=(2,), device=state.device)
+        #         state = state.clone()
+        #         state[2:4] = state[2:4] + noise
+        #     else:
+        #         noise = torch.normal(mean=0.0, std=0.01, size=state[:, 2:4].shape, device=state.device)
+        #         state = state.clone()
+        #         state[:, 2:4] = state[:, 2:4] + noise
 
         x = torch.cat([state, action], dim=1)
         x = F.relu(self.fc1(x))
@@ -133,14 +134,14 @@ class DDPGAgent(nn.Module):
             #attached_counter += 1
             #reward += 100 + attached_counter * 2
             reward += 100 #+ attached_counter * 2
-        else:
-            attached_counter = 0
+        #else:
+            #attached_counter = 0
         
         if rimbalzato:
             reward -= 5
 
         
-        return reward - 1, attached_counter
+        return reward - 1#, attached_counter
 
     def update(self, gamma=GAMMA, tau=TAU, device='cpu'):
         if len(self.buffer) < self.batch_size:
@@ -158,14 +159,14 @@ class DDPGAgent(nn.Module):
             target_Q = self.critic_target(next_states, next_actions)
             y = rewards + gamma * target_Q * (1 - dones)
 
-        current_Q = self.critic(states, actions, training=True)
+        current_Q = self.critic(states, actions)#, training=True)
         critic_loss = F.mse_loss(current_Q, y)
 
         self.optimizer_critic.zero_grad()
         critic_loss.backward()
         self.optimizer_critic.step()
 
-        actor_loss = -self.critic(states, self.actor(states, training=True), training=True).mean()
+        actor_loss = -self.critic(states, self.actor(states)).mean()#, training=True), training=True).mean()
         self.optimizer_actor.zero_grad()
         actor_loss.backward()
         self.optimizer_actor.step()
@@ -212,7 +213,7 @@ def save_trajectory_plot(trajectory, target_trajectory, episode, tag="trajectory
     plt.savefig(os.path.join(RUN_DIR, f"{tag}_ep{episode}.png"))
     plt.close()
 
-def train_ddpg(env=None, num_episodes=500001):
+def train_ddpg(env=None, num_episodes=10001):
     if env is None:
         env = TrackingEnv()
     state_dim = env.observation_space.shape[0]
@@ -227,7 +228,12 @@ def train_ddpg(env=None, num_episodes=500001):
         done = False
         total_reward = 0
         state = torch.tensor(state, dtype=torch.float32)
-        agent.noise_std = max(agent.min_noise_std, agent.noise_std * agent.noise_decay)
+        real_state = torch.tensor(state, dtype=torch.float32)
+
+        state.clone()
+        state[2:4] += torch.normal(mean=0.0, std=0.01, size=(2,), device=state.device)
+
+        agent.noise_std = max(agent.min_noise_std, agent.noise_std * agent.noise_decay)     # Exploration
         trajectory, target_trajectory = [], []
         attached_counter = 0
         total_attached_counter = 0
@@ -235,27 +241,34 @@ def train_ddpg(env=None, num_episodes=500001):
         while not done:
             trajectory.append(state[:2].detach().numpy())
             target_trajectory.append(state[2:4].detach().numpy())
-            action = agent.actor(state, training=True).detach().numpy()
+            action = agent.actor(state).detach().numpy()#, training=True).detach().numpy()
             noise = np.random.normal(0, agent.noise_std, size=action.shape)
-            noisy_action = action + noise
+            noisy_action = action + noise   # Exploration
             noisy_action = np.clip(noisy_action, env.action_space.low, env.action_space.high)
             action_tensor = torch.tensor(noisy_action, dtype=torch.float32)
 
             next_state, _, done, truncated, _, rimbalzato = env.step(noisy_action)
             next_state = torch.tensor(next_state, dtype=torch.float32)
+            real_next_state = torch.tensor(next_state, dtype=torch.float32)
 
-            # if torch.norm(next_state[:2] - state[2:4]) > tolerance:
-            #     attached_counter = 0
-            # else:
-            #     attached_counter += 1
+            next_state.clone()
+            next_state[2:4] += torch.normal(mean=0.0, std=0.01, size=(2,), device=next_state.device)
 
-            if torch.norm(next_state[:2] - state[2:4]) < tolerance:
+
+            if torch.norm(real_next_state[:2] - real_state[2:4]) < tolerance:
                 total_attached_counter += 1
                 attached_counter += 1
+            else:
+                attached_counter = 0
+
+            # if torch.norm(next_state[:2] - state[2:4]) < tolerance:
+            #     total_attached_counter += 1
+            #     attached_counter += 1
             
-            reward, attached_counter = agent.reward_function(state, action_tensor, next_state, 0, tolerance, rimbalzato, attached_counter)
+            #reward, attached_counter = agent.reward_function(state, action_tensor, next_state, 0, tolerance, rimbalzato, attached_counter)
+            reward = agent.reward_function(state, action_tensor, next_state, 0, tolerance, rimbalzato, attached_counter)
             
-            if attached_counter > 20 or truncated or (total_attached_counter > 0 and torch.norm(next_state[:2] - state[2:4]) > tolerance):
+            if attached_counter > 20 or truncated or (total_attached_counter > 0 and torch.norm(real_next_state[:2] - real_state[2:4]) > tolerance):
                 done = True
             
             transition = (state.numpy(), action_tensor.numpy(), reward, next_state.numpy(), float(done))
