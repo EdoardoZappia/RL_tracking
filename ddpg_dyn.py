@@ -268,8 +268,10 @@ def train_ddpg(env=None, num_episodes=10001):
             #     attached_counter += 1
             
             #reward, attached_counter = agent.reward_function(state, action_tensor, next_state, 0, tolerance, rimbalzato, attached_counter)
-            reward = agent.reward_function(state, action_tensor, next_state, 0, tolerance, rimbalzato, attached_counter)
+            #reward = agent.reward_function(state, action_tensor, next_state, 0, tolerance, rimbalzato, attached_counter)
             
+            reward = agent.reward_function(real_state, action_tensor, real_next_state, 0, tolerance, rimbalzato, attached_counter)
+
             if attached_counter > 20 or truncated or (total_attached_counter > 0 and torch.norm(real_next_state[:2] - real_state[2:4]) > tolerance):
                 done = True
             
