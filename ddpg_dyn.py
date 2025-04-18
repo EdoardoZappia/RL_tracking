@@ -17,7 +17,7 @@ np.random.seed(SEED)
 
 NUM_NEURONS = 256
 LR_ACTOR = 0.0005   #0.001
-LR_CRITIC = 0.0005   #0.0008  #0.001
+LR_CRITIC = 0.0008   #0.0008  #0.001
 GAMMA = 0.99
 TAU = 0.005
 EARLY_STOPPING_EPISODES = 30    #50
@@ -227,10 +227,11 @@ def train_ddpg(env=None, num_episodes=10001):
         state, _ = env.reset()
         done = False
         total_reward = 0
-        state = torch.tensor(state, dtype=torch.float32)
         real_state = torch.tensor(state, dtype=torch.float32)
+        state = torch.tensor(state, dtype=torch.float32)
+        
 
-        state.clone()
+        state = state.clone()
         state[2:4] += torch.normal(mean=0.0, std=0.01, size=(2,), device=state.device)
 
         agent.noise_std = max(agent.min_noise_std, agent.noise_std * agent.noise_decay)     # Exploration
@@ -248,10 +249,11 @@ def train_ddpg(env=None, num_episodes=10001):
             action_tensor = torch.tensor(noisy_action, dtype=torch.float32)
 
             next_state, _, done, truncated, _, rimbalzato = env.step(noisy_action)
-            next_state = torch.tensor(next_state, dtype=torch.float32)
             real_next_state = torch.tensor(next_state, dtype=torch.float32)
+            next_state = torch.tensor(next_state, dtype=torch.float32)
+            
 
-            next_state.clone()
+            next_state = next_state.clone()
             next_state[2:4] += torch.normal(mean=0.0, std=0.01, size=(2,), device=next_state.device)
 
 
