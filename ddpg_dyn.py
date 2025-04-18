@@ -254,7 +254,7 @@ def train_ddpg(env=None, num_episodes=10001):
             
 
             next_state = next_state.clone()
-            next_state[2:4] += torch.normal(mean=0.0, std=0.01, size=(2,), device=next_state.device)
+            next_state[2:4] += torch.normal(mean=0.0, std=0.005, size=(2,), device=next_state.device)
 
 
             if torch.norm(real_next_state[:2] - real_state[2:4]) < tolerance:
