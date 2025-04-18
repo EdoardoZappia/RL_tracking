@@ -17,7 +17,7 @@ np.random.seed(SEED)
 
 NUM_NEURONS = 256
 LR_ACTOR = 0.001 #0.0008   #0.001
-LR_CRITIC = 0.001 #0.0008  #0.001
+LR_CRITIC = 0.0008 #0.0008  #0.001
 GAMMA = 0.99
 TAU = 0.005
 EARLY_STOPPING_EPISODES = 30    #50
@@ -108,8 +108,8 @@ class DDPGAgent(nn.Module):
         self.critic_target = QNet(state_dim, action_dim)
         self.optimizer_actor = optim.Adam(self.actor.parameters(), lr=LR_ACTOR)
         self.optimizer_critic = optim.Adam(self.critic.parameters(), lr=LR_CRITIC)
-        self.buffer = ReplayBuffer(50000) #statico
-        #self.buffer = ReplayBuffer(20000) #dinamico
+        #self.buffer = ReplayBuffer(50000) #statico
+        self.buffer = ReplayBuffer(20000) #dinamico
         self.batch_size = 128   # dinamico non rumoroso
         #self.batch_size = 256
         self.noise_std = 0.5
